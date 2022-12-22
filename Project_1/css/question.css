@@ -1,0 +1,8 @@
+body {
+    color: white;
+    background-color: #001D3D;
+}
+.button-row li{
+    display: inline-block;
+    
+}
