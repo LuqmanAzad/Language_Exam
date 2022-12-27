@@ -36,7 +36,7 @@ const fetchQuestion = () => {
   }
 
   // Otherwise, fetch the next question
-  fetch(`/Project_1/question.php?offset=${currentNumber}`)
+  fetch(`/Project_1/php/question.php?offset=${currentNumber}`)
     .then((response) => response.json())
     .then((data) => {
       const question = document.querySelector(".question");
