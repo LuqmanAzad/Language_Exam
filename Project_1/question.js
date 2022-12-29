@@ -1,41 +1,42 @@
-
 let currentNumber = 0;
 const totalNumberOfQuestions = 10;
 
-const startTimer = (duration, display) => {
-  let timer = duration;
-  const interval = setInterval(() => {
-    const minutes = parseInt(timer / 60, 10);
-    const seconds = parseInt(timer % 60, 10);
+let timer = 240;
+let intervalId;
+let elapsedTime = 0;
+let result = 0;
 
-    display.textContent = `${minutes.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
+const updateTimer = (duration, display) => {
+  timer = duration;
+  display.textContent = `${Math.floor(timer / 60)
+    .toString()
+    .padStart(2, "0")}:${(timer % 60).toString().padStart(2, "0")}`;
+};
 
-    if (--timer < 0) {
-      clearInterval(interval);
-      // Reset the timer and fetch the next question
-      startTimer(60, display);
-      currentNumber += 1;
-      history.pushState(
-        {},
-        "",
-        `/Project_1/html/question.html?offset=${currentNumber}`
-      );
-      fetchQuestion();
+const resetTimer = (duration, display) => {
+  clearInterval(intervalId);
+  updateTimer(duration, display);
+  intervalId = setInterval(() => {
+    elapsedTime++;
+    updateTimer(--timer, display);
+    if (timer === 0) {
+      clearInterval(intervalId);
+      window.location.href = `http://localhost/project_1/html/result.html?time=${elapsedTime}`;
     }
   }, 1000);
 };
 
 const fetchQuestion = () => {
-  // Check if the current question number is equal to the total number of questions
-  if (currentNumber === totalNumberOfQuestions) {
-    // Display the results page
-    showResultsPage();
-    return;
+  const urlParams = new URLSearchParams(window.location.search);
+  const offset = urlParams.get("offset");
+
+  if (offset === "10") {
+    window.location.href = `http://localhost/project_1/html/result.html?time=${elapsedTime}&result=${result}`;
   }
 
-  // Otherwise, fetch the next question
+  if (currentNumber === totalNumberOfQuestions) {
+    window.location.href = `http://localhost/project_1/html/result.html?time=${elapsedTime}&result=${result}`;
+  }
   fetch(`/Project_1/php/question.php?offset=${currentNumber}`)
     .then((response) => response.json())
     .then((data) => {
@@ -45,7 +46,6 @@ const fetchQuestion = () => {
       const questionNum = document.querySelector("#question_num");
       questionNum.textContent = `Question ${data.id}`;
 
-      // Shuffle the options array
       const options = [data.Answer, data.Option2, data.Option3, data.Option4];
       for (let i = options.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -59,73 +59,54 @@ const fetchQuestion = () => {
     });
 };
 
-  
-  const showResultsPage = () => {
-    // Hide the quiz elements
-    const quizElements = document.querySelectorAll(".option label");
-    quizElements.forEach((element) => {
-      element.style.display = "none";
-    });
-  
-    // Show the results page
-    // const resultsPage = document.querySelector("#results-page");
-    // resultsPage.style.display = "block";
-  
-    // Update the question number element to show "Results"
-    const questionNum = document.querySelector("#question_num");
-    questionNum.textContent = "Results";
-  
-    // Calculate and display the results
-    // (code to calculate and display the results goes here)
-  
-    // Update the timer to show the total time taken to complete the quiz
-    const timer = document.querySelector("#timer");
-    timer.textContent = "Total time: 60 seconds"; // Replace 60 with the actual total time taken to complete the quiz
-  };
-  
-  window.addEventListener("load", () => {
-    let timer = 60; // Initialize timer value
-    const display = document.querySelector("#timer");
-    startTimer(timer, display);
-  
-    const options = document.querySelectorAll(".option");
-    options.forEach((option) => {
-      option.addEventListener("change", (event) => {
-        const selectedOption = event.target.parentElement;
-        if (selectedOption.classList.contains("selected")) {
-          selectedOption.classList.remove("selected");
-        } else {
-          for (const option of options) {
-            option.classList.remove("selected");
-          }
-          selectedOption.classList.add("selected");
-        }
-      });
-    });
-  
-    // Fetch and display the first question
-    fetchQuestion();
-  
-    // Add event listener for submit button
-    const submitButton = document.querySelector(".submit");
-    submitButton.addEventListener("click", () => {
-      // Reset timer value to the duration
-      timer = 60;
-      startTimer(timer, display); // Restart the timer
-        // Reset selectedoption to the default state
-    options.forEach((option) => {
-      option.classList.remove("selected");
-    });
+window.addEventListener("load", () => {
+  const name = sessionStorage.getItem("name");
 
-    // Increase currentNumber by 1
+  // Get the user-name element
+  const userNameElement = document.querySelector("#user-name");
+
+  // Update the innerHTML of the user-name element with the name value
+  userNameElement.innerHTML = name;
+
+  const display = document.querySelector("#timer");
+  resetTimer(timer, display);
+
+  const options = document.querySelectorAll(".option");
+  options.forEach((option) => {
+    option.addEventListener("change", (event) => {
+      // Reset the background color of the previous option
+      for (const option of options) {
+        option.classList.remove("selected");
+      }
+
+      const selectedOption = event.target.parentElement;
+      if (selectedOption.classList.contains("selected")) {
+        selectedOption.classList.remove("selected");
+      } else {
+        // Add the 'selected' class to the new option
+        selectedOption.classList.add("selected");
+      }
+
+      // Check if the selected option is the correct answer
+      // If it is, add 10 to the result
+      if (selectedOption.textContent === data.Answer) {
+        result += 10;
+      }
+    });
+  });
+
+  fetchQuestion();
+
+  const submitButton = document.querySelector(".submit");
+  submitButton.addEventListener("click", () => {
+    options.forEach((option) => option.classList.remove("selected"));
     currentNumber += 1;
-    // Update the URL with the updated currentNumber
     history.pushState(
       {},
       "",
       `/Project_1/html/question.html?offset=${currentNumber}`
     );
-    //Fetch the next question with the updated currentNumber
     fetchQuestion();
   });
 });
+
