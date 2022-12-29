@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Exam Results</title>
+  </head>
+  <body>
+    <h1>Exam Results</h1>
+    <div id="result_time"></div>
+    <p>Your result: <span id="result"></span></p>
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const elapsedTime = urlParams.get("time");
+
+      // Display the elapsed time on the result page
+      const resultTime = document.querySelector("#result_time");
+      resultTime.textContent = `Time taken: ${elapsedTime} seconds`;
+
+      const result = urlParams.get("result");
+
+      // Update the result message based on the value of the result
+      if (result >= 80) {
+          document.querySelector("#result-message").textContent = "Congratulations! You passed the quiz with a high score.";
+      } else if (result >= 50) {
+          document.querySelector("#result-message").textContent = "You passed the quiz. Good job!";
+      } else {
+          document.querySelector("#result-message").textContent = "Unfortunately, you did not pass the quiz. Better luck next time.";
+      }
+    </script>
+  </body>
+</html>
