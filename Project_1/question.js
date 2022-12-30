@@ -1,11 +1,14 @@
 let currentNumber = 0;
 const totalNumberOfQuestions = 10;
+let result = 0; // initialize result to 0
+let selectedAnswer; // add this line
 
 let timer = 240;
 let intervalId;
 let elapsedTime = 0;
-let result = 0;
-
+const selectedRadio = document.querySelector(
+  'input[type="radio"]:checked'
+);
 const updateTimer = (duration, display) => {
   timer = duration;
   display.textContent = `${Math.floor(timer / 60)
@@ -37,11 +40,11 @@ const fetchQuestion = () => {
   if (currentNumber === totalNumberOfQuestions) {
     window.location.href = `http://localhost/project_1/html/result.html?time=${elapsedTime}&result=${result}`;
   }
-  fetch(`/Project_1/php/question.php?offset=${currentNumber}`)
+  fetch(`/Project_1/question.php?offset=${currentNumber}`)
     .then((response) => response.json())
     .then((data) => {
       const question = document.querySelector(".question");
-      question.textContent = data.question;
+      question.textContent = data.Question;
 
       const questionNum = document.querySelector("#question_num");
       questionNum.textContent = `Question ${data.id}`;
@@ -52,12 +55,15 @@ const fetchQuestion = () => {
         [options[i], options[j]] = [options[j], options[i]];
       }
 
-      const optionElements = document.querySelectorAll(".option label");
+      const optionElements = document.querySelectorAll(".radio-label");
+
       optionElements.forEach((option, index) => {
         option.textContent = options[index];
       });
     });
 };
+window.fetchQuestion = fetchQuestion;
+
 
 window.addEventListener("load", () => {
   const name = sessionStorage.getItem("name");
@@ -71,27 +77,25 @@ window.addEventListener("load", () => {
   const display = document.querySelector("#timer");
   resetTimer(timer, display);
 
-  const options = document.querySelectorAll(".option");
+  const options = document.querySelectorAll(".radio-label");
   options.forEach((option) => {
-    option.addEventListener("change", (event) => {
-      // Reset the background color of the previous option
-      for (const option of options) {
-        option.classList.remove("selected");
-      }
+    option.addEventListener("click", (event) => {
+      labels.forEach((label) => {
+        label.addEventListener("click", (event) => {
+          // Get the selected radio button
+          const selectedRadio = document.querySelector(
+            'input[type="radio"]:checked'
+          );
 
-      const selectedOption = event.target.parentElement;
-      if (selectedOption.classList.contains("selected")) {
-        selectedOption.classList.remove("selected");
-      } else {
-        // Add the 'selected' class to the new option
-        selectedOption.classList.add("selected");
-      }
+          // Remove the class from all label elements
+          labels.forEach((label) =>
+            label.classList.remove(selectedRadio.value)
+          );
 
-      // Check if the selected option is the correct answer
-      // If it is, add 10 to the result
-      if (selectedOption.textContent === data.Answer) {
-        result += 10;
-      }
+          // Add the class to the clicked label element
+          event.target.classList.add(selectedRadio.value);
+        });
+      });
     });
   });
 
@@ -99,14 +103,28 @@ window.addEventListener("load", () => {
 
   const submitButton = document.querySelector(".submit");
   submitButton.addEventListener("click", () => {
-    options.forEach((option) => option.classList.remove("selected"));
     currentNumber += 1;
+    const selectedRadio = document.querySelector(
+      'input[type="radio"]:checked'
+    );
     history.pushState(
       {},
       "",
       `/Project_1/html/question.html?offset=${currentNumber}`
     );
+  
+    fetch(`/Project_1/question.php?offset=${currentNumber}`)
+      .then((response) => response.json())
+      .then((data) => {
+        // Check if the selected option is correct
+        if (selectedRadio.value === data.Answer) {
+          // Increment the result if the selected option is correct
+          result += 10;
+        }
+      });
+      var degree = result;
+      sessionStorage.setItem("result", degree);
     fetchQuestion();
   });
+  
 });
-
